@@ -11,44 +11,41 @@ object DBFFile {
   def parse(file: String): Try[DBFFile] = {
     Try {
       val data = ByteBuffer.wrap(Files.readAllBytes(Paths.get(file)))
-      parse(data)
-    } flatten
-  }
 
-  def parse(data: ByteBuffer): Try[DBFFile] = Try {
-    data.order(ByteOrder.LITTLE_ENDIAN)
-    val version = data.get
-    data.position(4)
-    val numRecords: Int = data.getInt
-    val bytesInHeader: Int = data.getShort
-    val bytesInRecord: Int = data.getShort
+      data.order(ByteOrder.LITTLE_ENDIAN)
+      val version = data.get
+      data.position(4)
+      val numRecords: Int = data.getInt
+      val bytesInHeader: Int = data.getShort
+      val bytesInRecord: Int = data.getShort
 
-    data.position(32)
+      data.position(32)
 
-    val n = (bytesInHeader - 33) / 32 toInt
+      val n = (bytesInHeader - 33) / 32 toInt
 
-    val fields = ((Nil: List[Field]) /: (0 until n)) {
-      case (acc, i) =>
-        val fieldName = asString(11, data)
-        val tpe = data.get.toChar
-        skip(4, data)
-        val len = data.get
-        skip(15, data)
-        acc ++ List(Field(fieldName, DBFFieldType.fromChar(tpe), len))
-    }
-
-    data.get
-    val records = for {
-      i <- 0 until numRecords
-    } yield {
-      data.get
-      val row = fields.map { f =>
-        asString(f.len, data)
+      val fields = ((Nil: List[Field]) /: (0 until n)) {
+        case (acc, i) =>
+          val fieldName = asString(11, data)
+          val tpe = data.get.toChar
+          skip(4, data)
+          val len = data.get
+          skip(15, data)
+          acc ++ List(Field(fieldName, DBFFieldType.fromChar(tpe), len))
       }
-      Row(row)
-    }
 
-    DBFFile(version, numRecords, fields, records)
+      data.get
+      val records = for {
+        i <- 0 until numRecords
+      } yield {
+        data.get
+        val row = fields.map { f =>
+          asString(f.len, data)
+        }
+        Row(row)
+      }
+
+      DBFFile(version, numRecords, fields, records)
+    }
   }
 
   private def asString(len: Int, data: ByteBuffer) = {

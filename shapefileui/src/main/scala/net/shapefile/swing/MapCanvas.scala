@@ -16,8 +16,8 @@ import net.shapefile.IndexedShape
 
 class MapCanvas(shapeFile: => Try[ShapeFile]) extends Panel {
 
-  var xFactor = 800
-  var yFactor = 800
+  var xFactor: Double = 1000
+  var yFactor: Double = 1000
 
   var startPoint = (0, 0)
   var endPoint = (0, 0)
@@ -65,10 +65,10 @@ class MapCanvas(shapeFile: => Try[ShapeFile]) extends Panel {
         (p1, p2) =>
           (p1, p2) match {
             case ((Point(x1, y1), idx1), (Point(x2, y2), idx2)) =>
-              g.drawLine(origin._1 + (x1 - box.xMin).toInt / xFactor,
-                origin._2 - (y1 - box.yMin).toInt / yFactor,
-                origin._1 + (x2 - box.xMin).toInt / xFactor,
-                origin._2 - (y2 - box.yMin).toInt / yFactor)
+              g.drawLine((origin._1 + (x1 - box.xMin) / xFactor) toInt,
+                (origin._2 - (y1 - box.yMin) / yFactor) toInt,
+                (origin._1 + (x2 - box.xMin) / xFactor) toInt,
+                (origin._2 - (y2 - box.yMin) / yFactor) toInt)
               p2
           }
       }
@@ -84,6 +84,7 @@ class MapCanvas(shapeFile: => Try[ShapeFile]) extends Panel {
     for { ShapeFile(header, shapes) <- shapeFile } {
       shapes.map {
         case IndexedShape(idx, p @ Polygon(box, parts, points)) => drawPolygon(g, origin, p, header.box)
+        case s => println(s)
       }
     }
   }

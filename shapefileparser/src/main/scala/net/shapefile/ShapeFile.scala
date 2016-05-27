@@ -4,8 +4,17 @@ import scala.util.Try
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import scala.util.Success
+import java.nio.file.Paths
+import java.nio.file.Files
 
 object ShapeFile {
+  def parse(file: String): Try[ShapeFile] = {
+    Try {
+      val data = ByteBuffer.wrap(Files.readAllBytes(Paths.get(file)))
+      ShapeFile(ShapeFileHeader.parse(data), Shapes.parseShapes(data, Nil))
+    }
+  }
+
   def parse(data: ByteBuffer): Try[ShapeFile] = {
     Try {
       ShapeFile(ShapeFileHeader.parse(data), Shapes.parseShapes(data, Nil))
@@ -14,7 +23,7 @@ object ShapeFile {
 
 }
 
-case class ShapeFile(header: ShapeFileHeader, records: List[IndexedShape])
+case class ShapeFile(header: ShapeFileHeader, shapes: List[IndexedShape])
 
 object ShapeFileHeader {
   def parse(data: ByteBuffer): ShapeFileHeader = {

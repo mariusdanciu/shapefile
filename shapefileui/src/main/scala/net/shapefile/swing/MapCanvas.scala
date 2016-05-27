@@ -13,44 +13,41 @@ import net.shapefile.ShapeFile
 import java.awt.Color
 import net.shapefile.Point
 import net.shapefile.IndexedShape
+import scala.util.Random
 
-class MapCanvas(shapeFile: => Try[ShapeFile]) extends Panel {
+class MapCanvas(shapeFile: ShapeFile) extends Panel {
 
-  var xFactor: Double = 1000
-  var yFactor: Double = 1000
-
-  var startPoint = (0, 0)
-  var endPoint = (0, 0)
-
+  var dragPoint = (0, 0)
   var origin: (Int, Int) = null
+  var scaleRatio = 0.0
+  var scaleStep = 0.0
 
   listenTo(mouse.wheel, mouse.clicks, mouse.moves)
 
   reactions += {
     case m: MouseWheelMoved =>
-      if (m.rotation > 0) {
-        xFactor += 20
-        yFactor += 20
-      } else if (xFactor > 20) {
-        xFactor -= 20
-        yFactor -= 20
+      if (m.rotation >= 0) {
+        scaleRatio += scaleStep
+      } else if (scaleRatio > scaleStep) {
+        scaleRatio -= scaleStep
       }
-      repaint()
+      repaint
+
     case MouseDragged(src, point, mods) =>
-      val deltaX = point.x - endPoint._1
-      val deltaY = point.y - endPoint._2
+      val deltaX = point.x - dragPoint._1
+      val deltaY = point.y - dragPoint._2
       origin = (origin._1 + deltaX, origin._2 + deltaY)
-      endPoint = (point.x, point.y)
+      dragPoint = (point.x, point.y)
       repaint
 
     case MouseReleased(src, point, mods, clicks, triggers) =>
 
     case MousePressed(src, point, i1, i2, b) =>
-      endPoint = (point.x, point.y)
+      dragPoint = (point.x, point.y)
 
   }
 
-  def drawPolygon(g: Graphics2D, origin: (Int, Int), polygon: Polygon, box: BoundingBox) {
+  def drawPolygon(g: Graphics2D, polygon: Polygon) {
 
     val split = polygon.points.zipWithIndex.groupBy {
       case (point, index) =>
@@ -59,33 +56,31 @@ class MapCanvas(shapeFile: => Try[ShapeFile]) extends Panel {
         }
         pos.last
     }
+    val box = shapeFile.header.box
 
     for { points <- split.values } {
-      points.reduceLeft {
-        (p1, p2) =>
-          (p1, p2) match {
-            case ((Point(x1, y1), idx1), (Point(x2, y2), idx2)) =>
-              g.drawLine((origin._1 + (x1 - box.xMin) / xFactor) toInt,
-                (origin._2 - (y1 - box.yMin) / yFactor) toInt,
-                (origin._1 + (x2 - box.xMin) / xFactor) toInt,
-                (origin._2 - (y2 - box.yMin) / yFactor) toInt)
-              p2
-          }
-      }
+      val xs = points.map { case (Point(x, y), _) => (origin._1 + (x - box.xMin) / scaleRatio) toInt } toArray
+      val ys = points.map { case (Point(x, y), _) => (origin._2 - (y - box.yMin) / scaleRatio) toInt } toArray
+      val color = new Color(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255))
+
+      g.setColor(color)
+      g.fillPolygon(xs, ys, xs.length)
+      g.setColor(Color.black)
+      g.drawPolygon(xs, ys, xs.length)
     }
   }
 
   override def paintComponent(g: Graphics2D) {
     if (origin == null) {
       origin = (0, size.height)
+      val dy = shapeFile.header.box.yMax - shapeFile.header.box.yMin
+      scaleRatio = dy / 800
+      scaleStep = scaleRatio * 0.1
     }
     g.clearRect(0, 0, size.width, size.height)
     g.setColor(Color.black)
-    for { ShapeFile(header, shapes) <- shapeFile } {
-      shapes.map {
-        case IndexedShape(idx, p @ Polygon(box, parts, points)) => drawPolygon(g, origin, p, header.box)
-        case s => println(s)
-      }
+    shapeFile.shapes.map {
+      case IndexedShape(idx, p @ Polygon(box, parts, points)) => drawPolygon(g, p)
     }
   }
 }

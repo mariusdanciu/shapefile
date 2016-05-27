@@ -10,20 +10,16 @@ import java.nio.file.Files
 object ShapeFile {
   def parse(file: String): Try[ShapeFile] = {
     Try {
-      val data = ByteBuffer.wrap(Files.readAllBytes(Paths.get(file)))
-      ShapeFile(ShapeFileHeader.parse(data), Shapes.parseShapes(data, Nil))
-    }
-  }
-
-  def parse(data: ByteBuffer): Try[ShapeFile] = {
-    Try {
-      ShapeFile(ShapeFileHeader.parse(data), Shapes.parseShapes(data, Nil))
+      val data = ByteBuffer.wrap(Files.readAllBytes(Paths.get(file + ".shp")))
+      ShapeFile(file, ShapeFileHeader.parse(data), Shapes.parseShapes(data, Nil))
     }
   }
 
 }
 
-case class ShapeFile(header: ShapeFileHeader, shapes: List[IndexedShape])
+case class ShapeFile(path: String, header: ShapeFileHeader, shapes: List[IndexedShape]) {
+  def dbf: Try[DBFFile] = DBFFile.parse(path + ".dbf")
+}
 
 object ShapeFileHeader {
   def parse(data: ByteBuffer): ShapeFileHeader = {

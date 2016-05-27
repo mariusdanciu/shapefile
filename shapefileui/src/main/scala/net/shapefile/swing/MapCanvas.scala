@@ -59,8 +59,13 @@ class MapCanvas(shapeFile: ShapeFile) extends Panel {
     val box = shapeFile.header.box
 
     for { points <- split.values } {
-      val xs = points.map { case (Point(x, y), _) => (origin._1 + (x - box.xMin) / scaleRatio) toInt } toArray
-      val ys = points.map { case (Point(x, y), _) => (origin._2 - (y - box.yMin) / scaleRatio) toInt } toArray
+
+      val (xl, yl) = ((Nil: List[Int], Nil: List[Int]) /: points) {
+        case ((xs, ys), (p, _)) =>
+          (xs ++ List((origin._1 + (p.x - box.xMin) / scaleRatio).toInt),
+            ys ++ List((origin._2 - (p.y - box.yMin) / scaleRatio).toInt))
+      }
+      val (xs, ys) = (xl toArray, yl toArray)
       val color = new Color(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255))
 
       g.setColor(color)

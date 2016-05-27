@@ -6,12 +6,20 @@ lazy val commonSettings = Seq(
 )
 
 
-
-lazy val root = (project in file(".")).
+lazy val shapefileparser = (project in file("shapefileparser")).
   settings(commonSettings: _*).
   settings(
-    name := "shapefile",
+    name := "shapefileparser"
+  )
+
+
+lazy val shapefileui = (project in file("shapefileui")).
+  settings(commonSettings: _*).
+  settings(
+    name := "shapefileui",
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-swing" % "2.11+"
     )
-  )
+  ) dependsOn shapefileparser
+
+lazy val root = (project in file(".")).aggregate(shapefileparser, shapefileui)

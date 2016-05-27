@@ -9,12 +9,16 @@ import java.nio.file.Paths
 import java.awt.Dimension
 import java.nio.ByteBuffer
 import scala.swing.Label
+import net.shapefile.DBFFile
 
 object Demo extends SimpleSwingApplication {
-  val path = "../data/world/TM_WORLD_BORDERS_SIMPL-0.3.shp"
-  //val path = "../data/romania/Judete.shp"
+  //val path = "../data/world/TM_WORLD_BORDERS_SIMPL-0.3.shp"
+  val path = "../data/romania/Judete.shp"
 
   def loadShape = {
+
+    val dbf = DBFFile.parse("../data/romania/Judete.dbf")
+    dbf map { _ show }
     ShapeFile.parse(path)
   }
 

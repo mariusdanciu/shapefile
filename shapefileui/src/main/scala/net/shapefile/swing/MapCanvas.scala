@@ -73,6 +73,7 @@ class MapCanvas(shapeFile: ShapeFile) extends Panel {
       g.setColor(Color.black)
       g.drawPolygon(xs, ys, xs.length)
     }
+
   }
 
   override def paintComponent(g: Graphics2D) {

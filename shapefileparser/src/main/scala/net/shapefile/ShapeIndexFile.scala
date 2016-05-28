@@ -20,7 +20,7 @@ object ShapeIndexFile {
       }
     }
 
-    val idx = ByteBuffer.wrap(Files.readAllBytes(Paths.get(path)))
+    val idx = ByteBuffer.wrap(Files.readAllBytes(Paths.get(path + ".shx")))
     IO.skip(100, idx)
 
     ShapeIndexFile(parseIndexes(idx, Nil))

@@ -12,8 +12,8 @@ import scala.util.Try
 import net.shapefile.ShapeFile
 import java.awt.Color
 import net.shapefile.Point
-import net.shapefile.IndexedShape
 import scala.util.Random
+import net.shapefile.Geo
 
 class MapCanvas(shapeFile: ShapeFile) extends Panel {
 
@@ -86,7 +86,7 @@ class MapCanvas(shapeFile: ShapeFile) extends Panel {
     g.clearRect(0, 0, size.width, size.height)
     g.setColor(Color.black)
     shapeFile.shapes.map {
-      case IndexedShape(idx, p @ Polygon(box, parts, points)) => drawPolygon(g, p)
+      case Geo(p @ Polygon(box, parts, points), props) => drawPolygon(g, p)
     }
   }
 }

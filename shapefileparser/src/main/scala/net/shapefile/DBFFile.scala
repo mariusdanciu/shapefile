@@ -8,7 +8,7 @@ import java.nio.file.Paths
 import scala.util.Try
 
 object DBFFile {
-  def parse(file: String): Try[DBFFile] = {
+  def parse(path: String): Try[DBFFile] = {
 
     def parseSchema(data: ByteBuffer, num: Int) = ((Nil: List[Field]) /: (0 until num)) {
       case (acc, i) =>
@@ -31,7 +31,7 @@ object DBFFile {
     }
 
     Try {
-      val data = ByteBuffer.wrap(Files.readAllBytes(Paths.get(file)))
+      val data = ByteBuffer.wrap(Files.readAllBytes(Paths.get(path + ".dbf")))
 
       data.order(ByteOrder.LITTLE_ENDIAN)
       val version = data.get

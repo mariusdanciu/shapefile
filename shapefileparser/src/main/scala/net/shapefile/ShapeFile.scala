@@ -1,22 +1,45 @@
 package net.shapefile
 
-import scala.util.Try
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import scala.util.Success
-import java.nio.file.Paths
 import java.nio.file.Files
+import java.nio.file.Paths
+
+import scala.util.Try
 
 object ShapeFile {
-  def parse(path: String): Try[ShapeFile] = {
+  def parse(path: String, loadProps: Boolean): Try[ShapeFile] = {
     Try {
-      val data = ByteBuffer.wrap(Files.readAllBytes(Paths.get(path)))
-      ShapeFile(path, ShapeFileHeader.parse(data), Shapes.parseShapes(data, Nil))
+      val data = ByteBuffer.wrap(Files.readAllBytes(Paths.get(path + ".shp")))
+
+      val header = ShapeFileHeader.parse(data)
+      val shapes = Shapes.parseShapes(data, Nil)
+
+      val s = if (loadProps) {
+        val dbf = DBFFile.parse(path).get
+        for ((shape, row) <- shapes zip dbf.rows) yield {
+          Geo(shape, Props((dbf.meta zip row.values) map { case (f, v) => (f.name, v) } toMap))
+        }
+      } else {
+        shapes.map { Geo(_, Props(Map.empty)) }
+      }
+      ShapeFile(header, s)
     }
   }
 }
 
-case class ShapeFile(path: String, header: ShapeFileHeader, shapes: List[IndexedShape])
+case class Geo(shape: Shape, props: Props)
+
+case class Props(props: Map[String, String]) {
+  def int(key: String) = Try(props(key).toInt)
+  def long(key: String) = Try(props(key).toLong)
+  def float(key: String) = Try(props(key).toFloat)
+  def double(key: String) = Try(props(key).toDouble)
+  def boolean(key: String) = Try(props(key).toBoolean)
+  def string(key: String) = Try(props(key))
+}
+
+case class ShapeFile(header: ShapeFileHeader, shapes: List[Geo])
 
 object ShapeFileHeader {
   def parse(data: ByteBuffer): ShapeFileHeader = {

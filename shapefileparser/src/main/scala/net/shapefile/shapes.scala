@@ -9,10 +9,6 @@ sealed trait Shape {
   def shapeType: ShapeType
 }
 
-case class IndexedShape(index: Int, shape: Shape) extends Shape {
-  def shapeType = shape.shapeType
-}
-
 case object NullShape extends Shape {
   def shapeType = NullShapeType
 }
@@ -91,13 +87,13 @@ case class Box(xMin: Double, yMin: Double,
 object Shapes {
 
   @tailrec
-  def parseShapes(data: ByteBuffer, acc: List[IndexedShape]): List[IndexedShape] = {
+  def parseShapes(data: ByteBuffer, acc: List[Shape]): List[Shape] = {
     if (data.hasRemaining()) {
       val RecordHeader(idx, size) = RecordHeader.parse(data)
       data.order(ByteOrder.LITTLE_ENDIAN)
 
       val shapeType = data.getInt
-      val shape = IndexedShape(idx, ShapeType.fromInt(shapeType).parse(data))
+      val shape = ShapeType.fromInt(shapeType).parse(data)
 
       parseShapes(data, acc ++ List(shape))
     } else {

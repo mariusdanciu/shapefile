@@ -9,6 +9,27 @@ import scala.util.Try
 
 object DBFFile {
   def parse(file: String): Try[DBFFile] = {
+
+    def parseSchema(data: ByteBuffer, num: Int) = ((Nil: List[Field]) /: (0 until num)) {
+      case (acc, i) =>
+        val fieldName = asString(11, data)
+        val tpe = data.get.toChar
+        IO.skip(4, data)
+        val len = data.get
+        IO.skip(15, data)
+        acc ++ List(Field(fieldName, DBFFieldType.fromChar(tpe), len))
+    }
+
+    def parseRecords(data: ByteBuffer, numRecords: Int, fields: List[Field]) = for {
+      i <- 0 until numRecords
+    } yield {
+      data.get
+      val row = fields.map { f =>
+        asString(f.len, data)
+      }
+      Row(row)
+    }
+
     Try {
       val data = ByteBuffer.wrap(Files.readAllBytes(Paths.get(file)))
 
@@ -17,34 +38,16 @@ object DBFFile {
       data.position(4)
       val numRecords: Int = data.getInt
       val bytesInHeader: Int = data.getShort
-      val bytesInRecord: Int = data.getShort
 
       data.position(32)
 
       val n = (bytesInHeader - 33) / 32 toInt
 
-      val fields = ((Nil: List[Field]) /: (0 until n)) {
-        case (acc, i) =>
-          val fieldName = asString(11, data)
-          val tpe = data.get.toChar
-          skip(4, data)
-          val len = data.get
-          skip(15, data)
-          acc ++ List(Field(fieldName, DBFFieldType.fromChar(tpe), len))
-      }
-
+      val schema = parseSchema(data, n)
       data.get
-      val records = for {
-        i <- 0 until numRecords
-      } yield {
-        data.get
-        val row = fields.map { f =>
-          asString(f.len, data)
-        }
-        Row(row)
-      }
+      val records = parseRecords(data, numRecords, schema)
 
-      DBFFile(version, numRecords, fields, records)
+      DBFFile(version, numRecords, schema, records)
     }
   }
 
@@ -54,15 +57,12 @@ object DBFFile {
     (arr.filter(_ > 0).map { _ toChar }).mkString.trim
   }
 
-  private def skip(n: Int, data: ByteBuffer) = {
-    for { _ <- 0 until n } {
-      data.get
-    }
-  }
 }
 
 case class DBFFile(version: Byte, numRecords: Int, meta: List[Field], rows: Seq[Row]) {
   def show {
+    println(meta mkString "\n")
+    println("===================================")
     println(rows mkString "\n")
   }
 }

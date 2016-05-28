@@ -8,18 +8,15 @@ import java.nio.file.Paths
 import java.nio.file.Files
 
 object ShapeFile {
-  def parse(file: String): Try[ShapeFile] = {
+  def parse(path: String): Try[ShapeFile] = {
     Try {
-      val data = ByteBuffer.wrap(Files.readAllBytes(Paths.get(file + ".shp")))
-      ShapeFile(file, ShapeFileHeader.parse(data), Shapes.parseShapes(data, Nil))
+      val data = ByteBuffer.wrap(Files.readAllBytes(Paths.get(path)))
+      ShapeFile(path, ShapeFileHeader.parse(data), Shapes.parseShapes(data, Nil))
     }
   }
-
 }
 
-case class ShapeFile(path: String, header: ShapeFileHeader, shapes: List[IndexedShape]) {
-  def dbf: Try[DBFFile] = DBFFile.parse(path + ".dbf")
-}
+case class ShapeFile(path: String, header: ShapeFileHeader, shapes: List[IndexedShape])
 
 object ShapeFileHeader {
   def parse(data: ByteBuffer): ShapeFileHeader = {
@@ -34,7 +31,7 @@ object ShapeFileHeader {
   }
 }
 
-case class ShapeFileHeader(langth: Int,
+case class ShapeFileHeader(size: Int,
                            version: Int,
                            shapeType: ShapeType,
                            box: BoundingBox)
@@ -52,5 +49,4 @@ case class BoundingBox(xMin: Double, yMin: Double,
                        xMax: Double, yMax: Double,
                        zMin: Double, zMax: Double,
                        mMin: Double, mMax: Double)
-
 

@@ -66,10 +66,10 @@ class MapCanvas(shapeFile: ShapeFile) extends Panel {
             ys ++ List((origin._2 - (p.y - box.yMin) / scaleRatio).toInt))
       }
       val (xs, ys) = (xl toArray, yl toArray)
-      val color = new Color(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255))
+      //val color = new Color(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255))
 
-      g.setColor(color)
-      g.fillPolygon(xs, ys, xs.length)
+      //g.setColor(color)
+      //g.fillPolygon(xs, ys, xs.length)
       g.setColor(Color.black)
       g.drawPolygon(xs, ys, xs.length)
     }

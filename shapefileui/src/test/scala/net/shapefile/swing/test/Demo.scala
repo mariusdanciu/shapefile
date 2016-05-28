@@ -10,21 +10,20 @@ import java.awt.Dimension
 import java.nio.ByteBuffer
 import scala.swing.Label
 import net.shapefile.DBFFile
+import net.shapefile.ShapeIndexFile
 
 object Demo extends SimpleSwingApplication {
-  val path = "../data/world/TM_WORLD_BORDERS_SIMPL-0.3"
-  //val path = "../data/romania/Judete"
+  //val path = "../data/world/TM_WORLD_BORDERS_SIMPL-0.3"
+  val path = "../data/romania/Judete"
 
   def loadShape = {
 
-    val sf = ShapeFile.parse(path)
-    for {
-      s <- sf
-      dbf <- s.dbf
-    } {
-      dbf.show
-    }
-    
+    val sf = ShapeFile.parse(path + ".shp")
+    val dbf = DBFFile.parse(path + ".dbf")
+    val idx = ShapeIndexFile.parse(path + ".shx")
+
+    println(dbf)
+    println(idx)
     sf
   }
 

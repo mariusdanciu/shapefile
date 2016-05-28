@@ -15,20 +15,21 @@ object ShapeFile {
       val header = ShapeFileHeader.parse(data)
       val shapes = Shapes.parseShapes(data, Nil)
 
-      val s = if (loadProps) {
+      val (s, schema) = if (loadProps) {
         val dbf = DBFFile.parse(path).get
-        for ((shape, row) <- shapes zip dbf.rows) yield {
+        (for ((shape, row) <- shapes zip dbf.rows) yield {
           Geo(shape, Props((dbf.meta zip row.values) map { case (f, v) => (f.name, v) } toMap))
-        }
+        }, Some(PropsSchema(dbf.meta)))
       } else {
-        shapes.map { Geo(_, Props(Map.empty)) }
+        (shapes.map { Geo(_, Props(Map.empty)) }, None)
       }
-      ShapeFile(header, s)
+      ShapeFile(header, s, schema)
     }
   }
 }
 
 case class Geo(shape: Shape, props: Props)
+case class PropsSchema(fields: List[Field])
 
 case class Props(props: Map[String, String]) {
   def int(key: String) = Try(props(key).toInt)
@@ -39,7 +40,7 @@ case class Props(props: Map[String, String]) {
   def string(key: String) = Try(props(key))
 }
 
-case class ShapeFile(header: ShapeFileHeader, shapes: List[Geo])
+case class ShapeFile(header: ShapeFileHeader, shapes: List[Geo], schema: Option[PropsSchema])
 
 object ShapeFileHeader {
   def parse(data: ByteBuffer): ShapeFileHeader = {

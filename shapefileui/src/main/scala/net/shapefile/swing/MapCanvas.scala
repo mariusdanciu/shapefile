@@ -59,21 +59,18 @@ class MapCanvas(shapeFile: ShapeFile) extends Panel {
     val box = shapeFile.header.box
 
     for { points <- split.values } {
-
-      val (xl, yl) = ((Nil: List[Int], Nil: List[Int]) /: points) {
-        case ((xs, ys), (p, _)) =>
-          (xs ++ List((origin._1 + (p.x - box.xMin) / scaleRatio).toInt),
-            ys ++ List((origin._2 - (p.y - box.yMin) / scaleRatio).toInt))
+      points.reduceLeft {
+        (p1, p2) =>
+          (p1, p2) match {
+            case ((Point(x1, y1), idx1), (Point(x2, y2), idx2)) =>
+              g.drawLine((origin._1 + (x1 - box.xMin) / scaleRatio) toInt,
+                (origin._2 - (y1 - box.yMin) / scaleRatio) toInt,
+                (origin._1 + (x2 - box.xMin) / scaleRatio) toInt,
+                (origin._2 - (y2 - box.yMin) / scaleRatio) toInt)
+              p2
+          }
       }
-      val (xs, ys) = (xl toArray, yl toArray)
-      //val color = new Color(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255))
-
-      //g.setColor(color)
-      //g.fillPolygon(xs, ys, xs.length)
-      g.setColor(Color.black)
-      g.drawPolygon(xs, ys, xs.length)
     }
-
   }
 
   override def paintComponent(g: Graphics2D) {

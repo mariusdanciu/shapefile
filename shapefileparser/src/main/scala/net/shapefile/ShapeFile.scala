@@ -6,6 +6,8 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 import scala.util.Try
+import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 object ShapeFile {
   def parse(path: String, loadProps: Boolean): Try[ShapeFile] = {

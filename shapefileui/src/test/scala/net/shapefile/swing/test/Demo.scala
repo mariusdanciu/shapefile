@@ -13,8 +13,8 @@ import net.shapefile.DBFFile
 import net.shapefile.ShapeIndexFile
 
 object Demo extends SimpleSwingApplication {
-  val path = "../data/world/TM_WORLD_BORDERS_SIMPL-0.3"
-  // val path = "../data/romania/Judete"
+  //val path = "../data/world/TM_WORLD_BORDERS_SIMPL-0.3"
+  val path = "../data/romania/Judete"
 
   def loadShape = {
 
